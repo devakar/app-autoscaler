@@ -1,0 +1,18 @@
+{
+    "plans": [
+        {
+            "plan_id" : 1234,
+            "plan_name" : "free plan",
+            "recurring_schedule_count" : 3,
+            "specific_date_count" : 3
+        },
+        {
+            "plan_id" : 7777,
+            "plan_name" : "premium plan",
+            "recurring_schedule_count" : 7,
+            "specific_date_count" : 7
+        }
+    ]
+       
+       
+}
