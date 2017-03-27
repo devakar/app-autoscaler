@@ -11,6 +11,8 @@ module.exports = function(app, settings, catalog) {
   var apiServerUtil = require(path.join(__dirname, '../util/apiServerUtil.js'))(settings);
   var messageUtil = require(path.join(__dirname, '../util/messageUtil.js'))(catalog);
 
+  var validationMiddleWare = require(path.join(__dirname, '../validation/validationMiddleWare.js'));
+
   function commitTransaction(transaction, response, statusCode, responseBody) {
     transaction.commit().then(function(res) {
       response.status(statusCode).json(responseBody || {});
@@ -27,7 +29,7 @@ module.exports = function(app, settings, catalog) {
     });
   }
 
-  app.put('/v2/service_instances/:instance_id/service_bindings/:binding_id', function(req, res) {
+  app.put('/v2/service_instances/:instance_id/service_bindings/:binding_id', validationMiddleWare, function(req, res) {
     var serviceInstanceId = req.params.instance_id;
     var bindingId = req.params.binding_id;
     var appId = req.body.app_guid;
