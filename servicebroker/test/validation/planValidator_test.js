@@ -8,20 +8,22 @@ var planValidator = require(path.join(__dirname,'../../lib/validation/planValida
 describe('Validating Plan',function(){
     var fakePolicy;
 
-    beforeEach(function(){
+    beforeEach(function(done){
       fakePolicy = JSON.parse(fs.readFileSync(__dirname+'/../fakePolicy.json', 'utf8'));
+      done();
     });
     
-    it('Should validate the plan successfully when there is no scaling rule, recurring and specific date schedule',function(){
+    it('Should validate the plan successfully when there is no scaling rule, recurring and specific date schedule',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when only recurring schedules exist',function(){
+    it('Should validate the plan successfully when only recurring schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -40,10 +42,11 @@ describe('Validating Plan',function(){
       
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when only specific date schedules exist',function(){
+    it('Should validate the plan successfully when only specific date schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -56,10 +59,11 @@ describe('Validating Plan',function(){
       }]      
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when only scaling rules exist',function(){
+    it('Should validate the plan successfully when only scaling rules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -74,10 +78,11 @@ describe('Validating Plan',function(){
       }]      
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when recurring and specific date schedules exist',function(){
+    it('Should validate the plan successfully when recurring and specific date schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -102,10 +107,11 @@ describe('Validating Plan',function(){
       }]
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when scaling rules and recurring schedules exist',function(){
+    it('Should validate the plan successfully when scaling rules and recurring schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -132,10 +138,11 @@ describe('Validating Plan',function(){
       }]
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when scaling rules and specific date schedules exist',function(){
+    it('Should validate the plan successfully when scaling rules and specific date schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -157,10 +164,11 @@ describe('Validating Plan',function(){
       }]
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should validate the plan successfully when scaling rules, recurring and specific date schedules exist',function(){
+    it('Should validate the plan successfully when scaling rules, recurring and specific date schedules exist',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
@@ -194,67 +202,74 @@ describe('Validating Plan',function(){
       }]
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result).to.be.empty;
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of recuuring schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of recuuring schedules as per plan',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.scaling_rules;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded recurring_schedule as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.recurring_schedule');
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of specific date schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of specific date schedules as per plan',function(done){
       delete fakePolicy.schedules.recurring_schedule;
       delete fakePolicy.scaling_rules;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded specific_date as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.specific_date');
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules as per plan',function(done){
       delete fakePolicy.schedules.specific_date;
       delete fakePolicy.schedules.recurring_schedule;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded scaling rules as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('scaling_rules');
+        done();
       });
     });
     
-    it('Should failed to validate the plan due to  exceeded maximum limit of recurring schedules and specific date schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of recurring schedules and specific date schedules as per plan',function(done){
       delete fakePolicy.scaling_rules;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded recurring_schedule as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.recurring_schedule');
         expect(result[1]).to.have.property('message').and.equal('policy exceeded specific_date as per plan of service');
         expect(result[1]).to.have.property('property').and.equal('schedules.specific_date');
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules and  recurring schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules and  recurring schedules as per plan',function(done){
       delete fakePolicy.schedules.specific_date;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded recurring_schedule as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.recurring_schedule');
         expect(result[1]).to.have.property('message').and.equal('policy exceeded scaling rules as per plan of service');
         expect(result[1]).to.have.property('property').and.equal('scaling_rules');
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules and specific date schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules and specific date schedules as per plan',function(done){
       delete fakePolicy.schedules.recurring_schedule;
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded specific_date as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.specific_date');
         expect(result[1]).to.have.property('message').and.equal('policy exceeded scaling rules as per plan of service');
         expect(result[1]).to.have.property('property').and.equal('scaling_rules');
+        done();
       });
     });
 
-    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules, recurring schedules and specific date schedules as per plan',function(){
+    it('Should failed to validate the plan due to  exceeded maximum limit of scaling rules, recurring schedules and specific date schedules as per plan',function(done){
       planValidator.validatePlan(fakePolicy,"autoscaler-guid", "autoscaler-free-plan-id", function(result){
         expect(result[0]).to.have.property('message').and.equal('policy exceeded recurring_schedule as per plan of service');
         expect(result[0]).to.have.property('property').and.equal('schedules.recurring_schedule');
@@ -262,6 +277,7 @@ describe('Validating Plan',function(){
         expect(result[1]).to.have.property('property').and.equal('schedules.specific_date');
         expect(result[2]).to.have.property('message').and.equal('policy exceeded scaling rules as per plan of service');
         expect(result[2]).to.have.property('property').and.equal('scaling_rules');
+        done();
       });
     });
 });

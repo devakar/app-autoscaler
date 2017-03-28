@@ -7,9 +7,6 @@
     "plans": [{
       "id": "autoscaler-free-plan-id",
       "name": "autoscaler-free-plan",
-      "recurring_schedule_count": 3,
-      "specific_date_count": 3,
-      "scaling_rules_count": 3,
       "description": "This is the free service plan for the Auto-Scaling service."
     }]
   }]
