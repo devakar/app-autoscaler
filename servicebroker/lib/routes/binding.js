@@ -11,7 +11,7 @@ module.exports = function(app, settings, catalog) {
   var apiServerUtil = require(path.join(__dirname, '../util/apiServerUtil.js'))(settings);
   var messageUtil = require(path.join(__dirname, '../util/messageUtil.js'))(catalog);
 
-  var validationMiddleWare = require(path.join(__dirname, '../validation/validationMiddleWare.js'));
+  var validationMiddleWare = require(path.join(__dirname, '../validation/validationMiddleware.js'));
 
   function commitTransaction(transaction, response, statusCode, responseBody) {
     transaction.commit().then(function(res) {

@@ -22,6 +22,8 @@ var auth = new Buffer(settings.username + ":" + settings.password).toString('bas
 var messageUtil = require(path.join(__dirname, '../../lib/util/messageUtil.js'))(catalog)
 var scope;
 
+var validationMiddleware = require(path.join(__dirname, '../../lib/validation/validationMiddleware'));
+
 var VALIDATION_ERROR_FROM_API_SERVER = "validation error from apiserver";
 
 function initNockBind(statusCode) {
@@ -100,7 +102,7 @@ describe('binding RESTful API', function() {
       it("creates a new binding with 201", function(done) {
         initNockBind(201);
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId, "parameters": policy })
           .expect(201)
@@ -117,7 +119,7 @@ describe('binding RESTful API', function() {
         it("return a 400", function(done) {
           initNockApiServerBindError(400);
           supertest(server)
-            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
             .set("Authorization", "Basic " + auth)
             .send({ "app_guid": appId, "parameters": policy })
             .expect(400)
@@ -133,7 +135,7 @@ describe('binding RESTful API', function() {
         it("return a 500", function(done) {
           initNockBind(500);
           supertest(server)
-            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
             .set("Authorization", "Basic " + auth)
             .send({ "app_guid": appId, "parameters": policy })
             .expect(500)
@@ -150,7 +152,7 @@ describe('binding RESTful API', function() {
           it('returns a 500', function(done) {
             initNockBind(300);
             supertest(server)
-              .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+              .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
               .set("Authorization", "Basic " + auth)
               .set('Accept', 'application/json')
               .send({ "app_guid": appId, "parameters": policy })
@@ -173,7 +175,7 @@ describe('binding RESTful API', function() {
       beforeEach(function(done) {
         initNockBind(201);
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId, "parameters": policy })
           .expect(201)
@@ -190,7 +192,7 @@ describe('binding RESTful API', function() {
       context('when an app is already bound', function() {
         it('returns a 409', function(done) {
           supertest(server)
-            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+            .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
             .set("Authorization", "Basic " + auth)
             .set('Accept', 'application/json')
             .send({ "app_guid": appId, "parameters": policy })
@@ -213,7 +215,7 @@ describe('binding RESTful API', function() {
         });
         it('returns a 409', function(done) {
           supertest(server)
-            .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId)
+            .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId, validationMiddleware)
             .set("Authorization", "Basic " + auth)
             .set('Accept', 'application/json')
             .send({ "app_guid": appId2, "parameters": policy })
@@ -236,7 +238,7 @@ describe('binding RESTful API', function() {
         });
         it('returns a 409', function(done) {
           supertest(server)
-            .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId)
+            .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId, validationMiddleware)
             .set("Authorization", "Basic " + auth)
             .set('Accept', 'application/json')
             .send({ "app_guid": appId, "parameters": policy })
@@ -254,7 +256,7 @@ describe('binding RESTful API', function() {
     context('when serviceInstanceId is undefined', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances//service_bindings/" + bindingId)
+          .put("/v2/service_instances//service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId })
           .expect(404)
@@ -269,7 +271,7 @@ describe('binding RESTful API', function() {
     context('when serviceInstanceId is blank space', function() {
       it("return a 400", function(done) {
         supertest(server)
-          .put("/v2/service_instances/   /service_bindings/" + bindingId)
+          .put("/v2/service_instances/   /service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId })
           .expect(400)
@@ -284,7 +286,7 @@ describe('binding RESTful API', function() {
     context('when bindingId is undefined', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/")
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/", validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId })
           .expect(404)
@@ -299,7 +301,7 @@ describe('binding RESTful API', function() {
     context('when bindingId is blank space', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + "   ")
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + "   ", validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId })
           .expect(404)
@@ -315,7 +317,7 @@ describe('binding RESTful API', function() {
     context('when appId is undefined', function() {
       it("return a 400", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .expect(400)
           .end(function(err, res) {
@@ -329,7 +331,7 @@ describe('binding RESTful API', function() {
     context('when appId is blank space', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": "  " })
           .expect(400)
@@ -345,7 +347,7 @@ describe('binding RESTful API', function() {
     context('when there is no policy in request', function() {
       it("return a 400", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId })
           .expect(400)
@@ -364,7 +366,7 @@ describe('binding RESTful API', function() {
     context('when the service instance does not exist', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId2 + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId, "parameters": policy })
           .expect(404)
@@ -385,7 +387,7 @@ describe('binding RESTful API', function() {
       beforeEach(function(done) {
         initNockBind(201);
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId)
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .send({ "app_guid": appId, "parameters": policy })
           .expect(201)
@@ -491,7 +493,7 @@ describe('binding RESTful API', function() {
     context('when serviceInstanceId is undefined', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances//service_bindings/" + bindingId)
+          .put("/v2/service_instances//service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .expect(404)
           .end(function(err, res) {
@@ -505,7 +507,7 @@ describe('binding RESTful API', function() {
     context('when serviceInstanceId is blank space', function() {
       it("return a 400", function(done) {
         supertest(server)
-          .put("/v2/service_instances/   /service_bindings/" + bindingId)
+          .put("/v2/service_instances/   /service_bindings/" + bindingId, validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .expect(400)
           .end(function(err, res) {
@@ -520,7 +522,7 @@ describe('binding RESTful API', function() {
     context('when bindingId is undefined', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/")
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/", validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .expect(404)
           .end(function(err, res) {
@@ -534,7 +536,7 @@ describe('binding RESTful API', function() {
     context('when bindingId is blank space', function() {
       it("return a 404", function(done) {
         supertest(server)
-          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + "   ")
+          .put("/v2/service_instances/" + serviceInstanceId + "/service_bindings/" + "   ", validationMiddleware)
           .set("Authorization", "Basic " + auth)
           .expect(404)
           .end(function(err, res) {
