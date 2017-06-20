@@ -18,6 +18,11 @@ type PolicyDB interface {
 	GetAppPolicy(appId string) (*models.ScalingPolicy, error)
 	RetrievePolicies() ([]*models.PolicyJson, error)
 	Close() error
+	AcquireLock(owner string, timestamp int64, ttl int) (bool, error)
+	FetchLock() (models.Lock, error)
+	ClaimLock(lock models.Lock) (bool, error)
+	ReleaseLock(owner string) error
+	RenewLock(owner string) error
 }
 
 type AppMetricDB interface {

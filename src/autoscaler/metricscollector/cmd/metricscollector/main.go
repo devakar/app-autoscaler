@@ -91,20 +91,11 @@ func main() {
 	}
 	defer policyDB.Close()
 
-	var createAppCollector func(string) collector.AppCollector
-	if conf.Collector.CollectMethod == config.CollectMethodPolling {
-		createAppCollector = func(appId string) collector.AppCollector {
-			return collector.NewAppPoller(logger.Session("app-poller"), appId, conf.Collector.CollectInterval, cfClient, noaa, instanceMetricsDB, mcClock)
-		}
-	} else {
-		createAppCollector = func(appId string) collector.AppCollector {
-			noaaConsumer := consumer.New(dopplerUrl, tlsConfig, nil)
-			noaaConsumer.RefreshTokenFrom(cfClient)
-			return collector.NewAppStreamer(logger.Session("app-streamer"), appId, conf.Collector.CollectInterval, cfClient, noaaConsumer, instanceMetricsDB, mcClock)
-		}
+	createAppCollector := func(appId string) collector.AppCollector {
+		return collector.NewAppPoller(logger.Session("app-poller"), appId, conf.Collector.CollectInterval, cfClient, noaa, instanceMetricsDB, mcClock)
 	}
-
 	collectServer := ifrit.RunFunc(func(signals <-chan os.Signal, ready chan<- struct{}) error {
+		fmt.Println("222222222222222222222222222222222222222222222222222222222222")
 		mc := collector.NewCollector(conf.Collector.RefreshInterval, logger.Session("collector"), policyDB, mcClock, createAppCollector)
 		mc.Start()
 
@@ -147,6 +138,47 @@ func main() {
 		members = append(members, grouper.Member{"registration", registrationRunner})
 	}
 
+	dbLockMaintainer := ifrit.RunFunc(func(signals <-chan os.Signal, ready chan<- struct{}) error {
+		lockTicker := time.NewTicker(10 * time.Second)
+		flag := true
+		owner := generateGUID(logger)
+		fmt.Println("******************************* Acquiring Lock ******************************")
+		isLockAcquired, lockErr := policyDB.AcquireLock(owner, time.Now().Unix(), 30)
+		if lockErr != nil {
+			logger.Error("Lock Error", lockErr)
+		}
+		fmt.Println("************************* Lock Acquired on fisrt attempt?  =  ", isLockAcquired, "*****************************************")
+		fmt.Println("*************************** Inside Go routine ******************************")
+		for {
+			select {
+			case <-signals:
+				fmt.Println("************************** Lets quit  **********************")
+				lockTicker.Stop()
+				releaseErr := policyDB.ReleaseLock(owner)
+				if releaseErr != nil {
+					logger.Error("Lock Error", releaseErr)
+				}
+				fmt.Println("*************************Releasing lock**************************")
+				return nil
+
+			case <-lockTicker.C:
+				fmt.Println("********************************* retrying-acquiring-lock ************************************")
+				isLockAcquired, lockErr := policyDB.AcquireLock(owner, time.Now().Unix(), 30)
+				if lockErr != nil {
+					logger.Error("Lock Error", lockErr)
+				}
+				fmt.Println("************************* Lock Acquired ?  =  ", isLockAcquired, "*****************************************")
+				if isLockAcquired && flag {
+					fmt.Println("******************** I am ready with lock****************************")
+					close(ready)
+					flag = false
+				}
+			}
+		}
+	})
+
+	members = append(grouper.Members{{"db-lock-maintainer", dbLockMaintainer}}, members...)
+
 	monitor := ifrit.Invoke(sigmon.New(grouper.NewOrdered(os.Interrupt, members)))
 
 	logger.Info("started")
@@ -157,6 +189,7 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("exited")
+	//doneChan <- true
 }
 
 func initLoggerFromConfig(conf *config.LoggingConfig) lager.Logger {
