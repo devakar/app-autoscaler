@@ -1,0 +1,18 @@
+applications:
+- name: metricscollector
+  memory: 1G
+  instances: 3
+  host: metricscollector
+  path: bin
+  buildpack: https://github.com/cloudfoundry/binary-buildpack.git
+  command: ./metricscollector -c mc_example.yml
+  port: 8107
+- name: eventgenerator
+  memory: 1G
+  instances: 3
+  host: eventgenerator
+  path: bin
+  buildpack: https://github.com/cloudfoundry/binary-buildpack.git
+  command: ./eventgenerator -c eg_example.yaml
+  health-check-type: none
+  no-route: true

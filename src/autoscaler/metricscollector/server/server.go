@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 
 	"autoscaler/cf"
 	"autoscaler/db"
@@ -31,7 +33,8 @@ func NewServer(logger lager.Logger, conf *config.Config, cfc cf.CfClient, consum
 	r.Get(routes.GetMemoryMetricRouteName).Handler(VarsFunc(mh.GetMemoryMetric))
 	r.Get(routes.GetMetricHistoriesRouteName).Handler(VarsFunc(mh.GetMetricHistories))
 
-	addr := fmt.Sprintf("0.0.0.0:%d", conf.Server.Port)
+	portEnv, _ := strconv.Atoi(os.Getenv("PORT"))
+	addr := fmt.Sprintf("0.0.0.0:%d", portEnv)
 
 	var runner ifrit.Runner
 	if (conf.Server.TLS.KeyFile == "") || (conf.Server.TLS.CertFile == "") {
@@ -45,6 +48,6 @@ func NewServer(logger lager.Logger, conf *config.Config, cfc cf.CfClient, consum
 		runner = http_server.NewTLSServer(addr, r, tlsConfig)
 	}
 
-	logger.Info("http-server-created", lager.Data{"serverConfig": conf.Server})
+	logger.Info("http-server-created", lager.Data{"port": portEnv})
 	return runner, nil
 }
