@@ -129,7 +129,7 @@ func (components *Components) MetricsCollector(confPath string, argv ...string) 
 		Name:              MetricsCollector,
 		AnsiColorCode:     "35m",
 		StartCheck:        `"metricscollector.started"`,
-		StartCheckTimeout: 10 * time.Second,
+		StartCheckTimeout: 30 * time.Second,
 		Command: exec.Command(
 			components.Executables[MetricsCollector],
 			append([]string{
@@ -318,8 +318,8 @@ func (components *Components) PrepareMetricsCollectorConfig(dbUri string, port i
 			TLS: models.TLSCerts{
 				KeyFile:    filepath.Join(testCertDir, "metricscollector.key"),
 				CertFile:   filepath.Join(testCertDir, "metricscollector.crt"),
-				CACertFile: filepath.Join(testCertDir, "autoscaler-ca.crt"),
-			},
+				CACertFile: filepath.Join(testCertDir, "autoscaler-ca.crt"),                       
+                         },
 		},
 		Logging: mcConfig.LoggingConfig{
 			Level: "debug",
@@ -332,10 +332,12 @@ func (components *Components) PrepareMetricsCollectorConfig(dbUri string, port i
 			CollectInterval: collectInterval,
 			RefreshInterval: refreshInterval,
 		},
-		Lock: mcConfig.LockConfig{
-			LockTTL:             lockTTL,
-			LockRetryInterval:   lockRetryInterval,
-			ConsulClusterConfig: ConsulClusterConfig,
+		Lock: mcConfig.LockConfig{},
+                DBLock: mcConfig.DBLockConfig{
+			Type:      "metrics_collector",
+			Owner:     "abcdefghijkl",
+			LockTTL:   "30",
+			LockDBURL: dbUri,
 		},
 	}
 
