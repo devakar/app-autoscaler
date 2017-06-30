@@ -203,6 +203,9 @@ func main() {
 					acquireLockflag = false
 					logger.Info("successfully acquired lock", lager.Data{"owner": owner, "type": locktype})
 				}
+    
+                        default:
+                                logger.Info("waiting for lock", lager.Data{"owner": owner, "type": locktype})
 			}
 		}
 	})

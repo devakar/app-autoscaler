@@ -324,7 +324,6 @@ var _ = Describe("MetricsCollector", func() {
 			})
 			Context("when metricscollector aquires lock for first time", func() {
 				BeforeEach(func() {
-					//sqldb_test.CleanLockTable()
 					noConsulConf := cfg
 					noConsulConf.Lock.ConsulClusterConfig = ""
 					runner.configPath = writeConfig(&noConsulConf).Name()
@@ -336,33 +335,43 @@ var _ = Describe("MetricsCollector", func() {
 					runner.Interrupt()
 				})
 				It("successfully aquire lock and start", func() {
-					Eventually(runner.Session.Buffer, 5*time.Second).Should(gbytes.Say("lock acquired in fisrt attempt"))
-					Eventually(runner.Session.Buffer, 5*time.Second).Should(gbytes.Say("metricscollector.started"))
+					Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("lock acquired in fisrt attempt"))
+					Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("metricscollector.started"))
 				})
 			})
-			// Context("when interrupt occurs", func() {
-			// 	BeforeEach(func() {
-			// 		noConsulConf := cfg
-			// 		noConsulConf.Lock.ConsulClusterConfig = ""
-			// 		runner.configPath = writeConfig(&noConsulConf).Name()
-			// 		runner.startCheck = ""
-			// 		runner.Start()
-			// 	})
-			// 	It("successfully release lock and stop", func() {
-			// 		Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("metricscollector.started"))
-			// 		fmt.Println("enter in test case")
-			// 		runner.Interrupt()
-			// 		//runner.KillWithFire()
-			// 		fmt.Println("interrupt sent")
-			// 		Eventually(runner.Session.Buffer, 10*time.Second).Should(gbytes.Say("received interrupt signal"))
-
-			// 		Eventually(runner.Session.Buffer, 10*time.Second).Should(gbytes.Say("successfully released lock"))
-			// 		//Eventually(runner.Session, 5).Should(Exit(0))
-			// 	})
-			// })
-			Context("when one instance of metricscollector stopped", func() {
+			Context("when metricscollector have the lock", func() {
 				BeforeEach(func() {
-					//sqldb_test.CleanLockTable()
+					noConsulConf := cfg
+					noConsulConf.Lock.ConsulClusterConfig = ""
+					runner.configPath = writeConfig(&noConsulConf).Name()
+					runner.startCheck = ""
+					runner.Start()
+				})
+				AfterEach(func() {
+					runner.Interrupt()
+				})
+				It("successfully retry lock", func() {
+					Eventually(runner.Session.Buffer, 35*time.Second).Should(gbytes.Say("retrying-acquiring-lock"))
+
+				})
+			})
+			Context("when interrupt occurs", func() {
+				BeforeEach(func() {
+					noConsulConf := cfg
+					noConsulConf.Lock.ConsulClusterConfig = ""
+					runner.configPath = writeConfig(&noConsulConf).Name()
+					runner.startCheck = ""
+					runner.Start()
+					Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("metricscollector.started"))
+				})
+				It("successfully release lock and stop", func() {
+					runner.Interrupt()
+					Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("received interrupt signal"))
+					Eventually(runner.Session.Buffer, 2*time.Second).Should(gbytes.Say("successfully released lock"))
+				})
+			})
+			Context("When one instance of metricscollector has lock the other will wait", func() {
+				BeforeEach(func() {
 					runner1 = NewMetricsCollectorRunner()
 					noConsulConf := cfg
 					noConsulConf.Lock.ConsulClusterConfig = ""
@@ -370,6 +379,7 @@ var _ = Describe("MetricsCollector", func() {
 					runner1.configPath = writeConfig(&noConsulConf).Name()
 					runner1.startCheck = ""
 					runner1.Start()
+					Eventually(runner1.Session.Buffer, 5*time.Second).Should(gbytes.Say("metricscollector.started"))
 
 					runner2 = NewMetricsCollectorRunner()
 					noConsulConfWithPort := cfg
@@ -380,27 +390,47 @@ var _ = Describe("MetricsCollector", func() {
 					runner2.startCheck = ""
 					runner2.Start()
 
-					// runner.Start()
-					//runner.KillWithFire()
-					// runner2.Start()
-					//Eventually(runner.Session, 5).Should(Exit(0))
+				})
+				AfterEach(func() {
+					runner2.Interrupt()
+					runner2.KillWithFire()
+					runner1.Interrupt()
+					runner1.KillWithFire()
+				})
+				It("should not get lock in first attempt", func() {
+					Consistently(runner2.Session.Buffer, 2*time.Second).ShouldNot(gbytes.Say("lock acquired in fisrt attempt"))
+				})
+			})
+			Context("when one instance of metricscollector stopped", func() {
+				BeforeEach(func() {
+					runner1 = NewMetricsCollectorRunner()
+					noConsulConf := cfg
+					noConsulConf.Lock.ConsulClusterConfig = ""
+					noConsulConf.Server.Port = 9000
+					runner1.configPath = writeConfig(&noConsulConf).Name()
+					runner1.startCheck = ""
+					runner1.Start()
+					Eventually(runner1.Session.Buffer, 20*time.Second).Should(gbytes.Say("metricscollector.started"))
+
+					runner2 = NewMetricsCollectorRunner()
+					noConsulConfWithPort := cfg
+					noConsulConfWithPort.Lock.ConsulClusterConfig = ""
+					noConsulConfWithPort.Server.Port = 8000
+					noConsulConfWithPort.DBLock.Owner = "second-owner"
+					runner2.configPath = writeConfig(&noConsulConfWithPort).Name()
+					runner2.startCheck = ""
+					runner2.Start()
+					Eventually(runner2.Session.Buffer, 30*time.Second).Should(gbytes.Say("waiting for lock"))
 				})
 				AfterEach(func() {
 					runner2.Interrupt()
 					runner2.KillWithFire()
 					runner1.KillWithFire()
-					//runner.Start()
 				})
 				It("other instance of metricscollector aquires lock", func() {
-					Eventually(runner1.Session.Buffer, 20*time.Second).Should(gbytes.Say("metricscollector.started"))
-					fmt.Println("enter in test case")
 					runner1.Interrupt()
-					//runner.KillWithFire()
-					fmt.Println("interrupt sent")
 					Eventually(runner1.Session.Buffer, 5*time.Second).Should(gbytes.Say("received interrupt signal"))
-
 					Eventually(runner1.Session.Buffer, 5*time.Second).Should(gbytes.Say("successfully released lock"))
-					//Eventually(runner.Session, 5).Should(Exit(0))
 					Eventually(runner2.Session.Buffer, 30*time.Second).Should(gbytes.Say("successfully acquired lock"))
 					Eventually(runner2.Session.Buffer, 30*time.Second).Should(gbytes.Say("metricscollector.started"))
 				})
