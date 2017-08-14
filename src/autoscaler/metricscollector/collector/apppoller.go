@@ -9,9 +9,13 @@ import (
 	"code.cloudfoundry.org/lager"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 
 	"time"
 )
+
+var timestamp int64
+
 
 type appPoller struct {
 	appId           string
@@ -69,18 +73,29 @@ func (ap *appPoller) pollMetric() {
 	var containerEnvelopes []*events.Envelope
 	var err error
 
-	for attempt := 0; attempt < 3; attempt++ {
-		logger.Debug("poll-metric-from-noaa-retry", lager.Data{"attempt": attempt + 1})
-		containerEnvelopes, err = ap.noaaConsumer.ContainerEnvelopes(ap.appId, cf.TokenTypeBearer+" "+ap.cfc.GetTokens().AccessToken)
-		if err == nil {
-			break
+	// for attempt := 0; attempt < 3; attempt++ {
+	// 	logger.Debug("poll-metric-from-noaa-retry", lager.Data{"attempt": attempt + 1})
+	// 	containerEnvelopes, err = ap.noaaConsumer.ContainerEnvelopes(ap.appId, cf.TokenTypeBearer+" "+ap.cfc.GetTokens().AccessToken)
+	// 	if err == nil {
+	// 		break
+	// 	}
+	// }
+	// if err != nil {
+	// 	logger.Error("poll-metric-from-noaa", err)
+	// 	return
+	// }
+    timestamp = 111111
+	containerEnvelopes = []*events.Envelope{
+		&events.Envelope{
+			ContainerMetric: &events.ContainerMetric{
+				ApplicationId:    proto.String(ap.appId),
+				InstanceIndex:    proto.Int32(0),
+				MemoryBytes:      proto.Uint64(100000000),
+				MemoryBytesQuota: proto.Uint64(300000000),
+				},
+				Timestamp: &timestamp,
+			},
 		}
-	}
-	if err != nil {
-		logger.Error("poll-metric-from-noaa", err)
-		return
-	}
-
 	logger.Debug("poll-metric-get-containerenvelopes", lager.Data{"envelops": containerEnvelopes})
 
 	metrics := noaa.GetInstanceMemoryMetricsFromContainerEnvelopes(ap.pclock.Now().UnixNano(), ap.appId, containerEnvelopes)
