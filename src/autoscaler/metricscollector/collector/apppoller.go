@@ -93,7 +93,7 @@ func (ap *appPoller) pollMetric() {
 				MemoryBytes:      proto.Uint64(100000000),
 				MemoryBytesQuota: proto.Uint64(300000000),
 				},
-				Timestamp: &timestamp,
+			Timestamp: &timestamp,
 			},
 		}
 	logger.Debug("poll-metric-get-containerenvelopes", lager.Data{"envelops": containerEnvelopes})

@@ -9,11 +9,15 @@ import (
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry/sonde-go/events"
+	//"github.com/gogo/protobuf/proto"
 
 	"fmt"
 	"time"
 )
-
+//type Envelope_EventType int32
+var eventChan chan *events.Envelope
+var errorChan chan error
+//var eventType  *events.Envelope_EventType
 type appStreamer struct {
 	appId           string
 	logger          lager.Logger
@@ -53,7 +57,27 @@ func (as *appStreamer) Stop() {
 }
 
 func (as *appStreamer) streamMetrics() {
-	eventChan, errorChan := as.noaaConsumer.Stream(as.appId, cf.TokenTypeBearer+" "+as.cfc.GetTokens().AccessToken)
+	//eventChan, errorChan := as.noaaConsumer.Stream(as.appId, cf.TokenTypeBearer+" "+as.cfc.GetTokens().AccessToken)
+	eventChan <- noaa.NewContainerEnvelope(111111, as.appId, 0, 12.8, 100000000, 1000000000, 300000000, 2000000000)
+	// timestamp = 1111111
+	// const Envelope_ContainerMetric Envelope_EventType = 9
+	// p := new(Envelope_EventType)
+    // *p = Envelope_ContainerMetric
+	//eventType *events.Envelope_EventType
+	// eventType = &events{
+	// 	Envelope_EventType: p,
+	// } 
+
+	// eventChan <- &events.Envelope{
+	// 		ContainerMetric: &events.ContainerMetric{
+	// 			ApplicationId:    proto.String(as.appId),
+	// 			InstanceIndex:    proto.Int32(0),
+	// 			MemoryBytes:      proto.Uint64(100000000),
+	// 			MemoryBytesQuota: proto.Uint64(300000000),
+	// 			},
+	// 		Timestamp: &timestamp,
+	// 		EventType: 
+	// }
 	as.ticker = as.sclock.NewTicker(as.collectInterval)
 	var err error
 	for {
@@ -81,7 +105,8 @@ func (as *appStreamer) streamMetrics() {
 				if closeErr != nil {
 					as.logger.Error("close-noaa-connection", err, lager.Data{"appid": as.appId})
 				}
-				eventChan, errorChan = as.noaaConsumer.Stream(as.appId, cf.TokenTypeBearer+" "+as.cfc.GetTokens().AccessToken)
+				//eventChan, errorChan = as.noaaConsumer.Stream(as.appId, cf.TokenTypeBearer+" "+as.cfc.GetTokens().AccessToken)
+				eventChan <- noaa.NewContainerEnvelope(111111, as.appId, 0, 12.8, 100000000, 1000000000, 300000000, 2000000000)
 				as.logger.Info("noaa-reconnected", lager.Data{"appid": as.appId})
 				err = nil
 			} else {
