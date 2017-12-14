@@ -3,6 +3,7 @@ package noaa
 import (
 	"autoscaler/models"
 	"fmt"
+
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
@@ -43,10 +44,10 @@ func GetInstanceMemoryMetricsFromContainerEnvelopes(collectAt int64, appId strin
 		if instanceMetric != nil {
 			metrics = append(metrics, instanceMetric)
 		}
-		instanceMetric = GetInstanceMemoryUtilMetricFromContainerMetricEvent(collectAt, appId, event)
-		if instanceMetric != nil {
-			metrics = append(metrics, instanceMetric)
-		}
+		// instanceMetric = GetInstanceMemoryUtilMetricFromContainerMetricEvent(collectAt, appId, event)
+		// if instanceMetric != nil {
+		// 	metrics = append(metrics, instanceMetric)
+		// }
 	}
 	return metrics
 }

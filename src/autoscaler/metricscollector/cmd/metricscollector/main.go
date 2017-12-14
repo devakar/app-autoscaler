@@ -93,10 +93,17 @@ func main() {
 	}
 	defer policyDB.Close()
 
+	appMetricDB, err := sqldb.NewAppMetricSQLDB(conf.DB.InstanceMetricsDbUrl, logger.Session("appMetric-db"))
+	if err != nil {
+		logger.Error("failed to connect app-metric database", err, lager.Data{"url": conf.DB.AppMetricDBUrl})
+		os.Exit(1)
+	}
+	defer appMetricDB.Close()
+
 	var createAppCollector func(string, chan *models.AppInstanceMetric) collector.AppCollector
 	if conf.Collector.CollectMethod == config.CollectMethodPolling {
 		createAppCollector = func(appId string, dataChan chan *models.AppInstanceMetric) collector.AppCollector {
-			return collector.NewAppPoller(logger.Session("app-poller"), appId, conf.Collector.CollectInterval, cfClient, noaa, mcClock, dataChan)
+			return collector.NewAppPoller(logger.Session("app-poller"), appId, appMetricDB, conf.Collector.CollectInterval, cfClient, noaa, mcClock, dataChan)
 		}
 	} else {
 		createAppCollector = func(appId string, dataChan chan *models.AppInstanceMetric) collector.AppCollector {
